@@ -1,13 +1,25 @@
 import { apiData } from "@/types/apiData"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { Modal, View, StyleSheet, Button, Text, TextInput } from "react-native"
-
+import { Modal, View, StyleSheet, Button, Text, TextInput, Alert } from "react-native"
+import { OptionsInput } from "./inputs/optionsInput"
+import { DateInput } from "./inputs/dateInput"
 interface AddModalProps {
     openModal: boolean
     setOpenModal: React.Dispatch<React.SetStateAction<boolean>>
     data?: apiData
 }
+
+const statusOptions = [
+    {
+        label: "Aguardando Pagamento",
+        value: "pending"
+    },
+    {
+        label: "Pago",
+        value: "completed"
+    }
+]
 
 export const AddModal: React.FC<AddModalProps> = ({ 
     openModal,
@@ -20,8 +32,37 @@ export const AddModal: React.FC<AddModalProps> = ({
     useEffect(() => {}, [data])
 
     const handleForm = async (data: OrderData) =>
-    {
-        console.log("data", data)
+    {        
+        const myHeaders = new Headers()
+     
+        myHeaders.append("Content-Type", "application/json")
+
+        const raw = JSON.stringify(data)
+
+        const requestOptions: any = {
+            method: "POST",
+            headers: myHeaders,
+            body: raw,
+            redirect: "follow"
+        }
+
+        try
+        {
+            const result = await fetch("https://apis.codante.io/api/orders-api/orders", requestOptions)
+    
+            if(result.ok)
+            {
+                const response = await result.json()
+                console.log(response)
+    
+                Alert.alert("Pedido Criado", "O pedido foi cadastrado no sistema")
+                setOpenModal(false)
+            }
+        }
+        catch(e)
+        {
+            Alert.alert("Erro", "Não foi possivel criar o pedido")
+        }
     }
 
     return (
@@ -60,6 +101,7 @@ export const AddModal: React.FC<AddModalProps> = ({
                             control={control}
                             render={({ field: { onChange, onBlur, value } }) => (
                                 <TextInput
+                                    keyboardType="email-address"
                                     style={{ ...styles.input, borderColor: errors.customer_email ? "red" : "" }}
                                     onBlur={onBlur}
                                     onChangeText={onChange}
@@ -71,7 +113,7 @@ export const AddModal: React.FC<AddModalProps> = ({
                                 required: 'Campo Obrigatório', 
                                 pattern: {
                                     value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                                    message: 'Email inválido'
+                                    message: 'Email Inválido'
                                 }
                             }}
                             defaultValue=""
@@ -82,12 +124,11 @@ export const AddModal: React.FC<AddModalProps> = ({
                         <Text style={styles.label}>Data do Pedido</Text>
                         <Controller
                             control={control}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={{ ...styles.input, borderColor: errors.order_date ? "red" : "" }}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
+                            render={({ field: { onChange, onBlur } }) => (
+                                <DateInput 
+                                    onChange={onChange} 
+                                    onBlur={onBlur} 
+                                    errors={errors}
                                 />
                             )}
                             name="order_date"
@@ -119,17 +160,12 @@ export const AddModal: React.FC<AddModalProps> = ({
                         <Text style={styles.label}>Status do Pedido</Text>
                         <Controller
                             control={control}
-                            render={({ field: { onChange, onBlur, value } }) => (
-                                <TextInput
-                                    style={{ ...styles.input, borderColor: errors.status ? "red" : "" }}
-                                    onBlur={onBlur}
-                                    onChangeText={onChange}
-                                    value={value}
-                                />
-                            )}
                             name="status"
-                            rules={{ required: 'Campo Obrigatório' }}
+                            rules={{ required: 'Campo obrigatório' }}
                             defaultValue=""
+                            render={({ field: { onChange }}) => (
+                                <OptionsInput options={statusOptions} onChange={onChange}/>
+                            )}
                         />
                         {errors.status && <Text style={styles.errorText}>{errors.status.message}</Text>}
                     </View>
@@ -181,13 +217,10 @@ const styles = StyleSheet.create({
     input: {
         padding: 5,
         width: "100%",
-        borderEndWidth: 1,
-        borderLeftWidth: 1,
-        borderTopWidth: 1,
-        borderBottomWidth: 1,
+        borderWidth: 1,
         borderTopRightRadius: 6,
         borderTopLeftRadius: 6,
-        borderBottomEndRadius: 6,
+        borderBottomRightRadius: 6,
         borderBottomLeftRadius: 6,
         backgroundColor: "#f6f3f3"
 
