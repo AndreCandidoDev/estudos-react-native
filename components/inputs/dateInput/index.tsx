@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FieldErrors, Noop } from "react-hook-form"
 import { TextInput, StyleSheet } from "react-native"
 
@@ -6,17 +6,31 @@ interface DateInputProps {
     onChange: (...event: any[]) => void
     onBlur: Noop
     errors: FieldErrors<OrderData>
+    value: string
+    editable: boolean
 }
 
 export const DateInput: React.FC<DateInputProps> = ({
     onChange,
     onBlur,
-    errors
+    errors,
+    value,
+    editable,
 }) =>
 {
     const [dataValue, setDateValue] = useState<string>("")
 
-    const formatInput = (value: string) => 
+    const parseInitial = (date: string): string =>
+    {
+        return date.split("-").reverse().join("/")
+    }
+
+    useEffect(() => 
+    {
+        setDateValue(parseInitial(value))
+    }, [value])
+
+    const formatInput = (value: string): string => 
     {
         const numbers = value.replace(/\D/g, '')
 
@@ -33,19 +47,19 @@ export const DateInput: React.FC<DateInputProps> = ({
         return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`
     }
 
-    const parseDateValue = (date: string) =>
+    const parseDateValue = (date: string): string =>
     {
         return date.split("/").reverse().join("-")   
     }
 
-    const handleChange = (text: string) =>
+    const handleChange = (text: string): void =>
     {
         const value = formatInput(text)
-        console.log(value)
 
         setDateValue(value)
 
         const parsedDate = parseDateValue(value)
+
         onChange(parsedDate)
     }
 
@@ -57,6 +71,7 @@ export const DateInput: React.FC<DateInputProps> = ({
             value={dataValue}
             maxLength={10}
             keyboardType="numeric"
+            editable={editable}
         />
     )
 }

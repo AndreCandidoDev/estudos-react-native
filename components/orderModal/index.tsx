@@ -2,12 +2,13 @@ import { apiData } from "@/types/apiData"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { Modal, View, StyleSheet, Button, Text, TextInput, Alert } from "react-native"
-import { OptionsInput } from "./inputs/optionsInput"
-import { DateInput } from "./inputs/dateInput"
-interface AddModalProps {
+import { OptionsInput } from "../inputs/optionsInput"
+import { DateInput } from "../inputs/dateInput"
+
+interface OrderModalProps {
     openModal: boolean
     setOpenModal: React.Dispatch<React.SetStateAction<boolean>>
-    data?: apiData
+    data?: apiData | null
 }
 
 const statusOptions = [
@@ -21,17 +22,29 @@ const statusOptions = [
     }
 ]
 
-export const AddModal: React.FC<AddModalProps> = ({ 
+export const OrderModal: React.FC<OrderModalProps> = ({ 
     openModal,
     setOpenModal,
     data
 }) =>
 {
-    const { control, handleSubmit, formState: { errors } } = useForm<OrderData>()
+    const { control, handleSubmit, formState: { errors }, reset } = useForm<OrderData>()
 
-    useEffect(() => {}, [data])
+    useEffect(() => 
+    {
+        if(data)
+        {
+            reset({
+                customer_name: data.customer_name,
+                customer_email: data.customer_email,
+                order_date: data.order_date,
+                amount_in_cents: String(data.amount_in_cents),
+                status: data.status,
+            })
+        }
+    }, [data])
 
-    const handleForm = async (data: OrderData) =>
+    const handleForm = async (data: OrderData): Promise<void> =>
     {        
         const myHeaders = new Headers()
      
@@ -74,7 +87,7 @@ export const AddModal: React.FC<AddModalProps> = ({
         >
             <View style={styles.addModal}>
                 <View style={styles.modalHeader}>
-                    <Text style={styles.title}>Adicionar Pedido</Text>
+                    <Text style={styles.title}>{data ? "Vizualizar Pedido" : "Adicionar Pedido"}</Text>
                 </View>
                 <View style={styles.content}>
                     <View style={styles.inputControl}>
@@ -87,6 +100,7 @@ export const AddModal: React.FC<AddModalProps> = ({
                                     onBlur={onBlur}
                                     onChangeText={onChange}
                                     value={value}
+                                    editable={data?.customer_name ? false : true}
                                 />
                             )}
                             name="customer_name"
@@ -106,6 +120,7 @@ export const AddModal: React.FC<AddModalProps> = ({
                                     onBlur={onBlur}
                                     onChangeText={onChange}
                                     value={value}
+                                    editable={data?.customer_email ? false : true}
                                 />
                             )}
                             name="customer_email"
@@ -124,11 +139,13 @@ export const AddModal: React.FC<AddModalProps> = ({
                         <Text style={styles.label}>Data do Pedido</Text>
                         <Controller
                             control={control}
-                            render={({ field: { onChange, onBlur } }) => (
+                            render={({ field: { onChange, onBlur, value } }) => (
                                 <DateInput 
                                     onChange={onChange} 
                                     onBlur={onBlur} 
                                     errors={errors}
+                                    value={value}
+                                    editable={data?.order_date ? false : true}
                                 />
                             )}
                             name="order_date"
@@ -148,6 +165,7 @@ export const AddModal: React.FC<AddModalProps> = ({
                                     onBlur={onBlur}
                                     onChangeText={onChange}
                                     value={value}
+                                    editable={data?.amount_in_cents ? false : true}
                                 />
                             )}
                             name="amount_in_cents"
@@ -163,16 +181,27 @@ export const AddModal: React.FC<AddModalProps> = ({
                             name="status"
                             rules={{ required: 'Campo obrigatório' }}
                             defaultValue=""
-                            render={({ field: { onChange }}) => (
-                                <OptionsInput options={statusOptions} onChange={onChange}/>
+                            render={({ field: { onChange, value }}) => (
+                                <OptionsInput 
+                                    options={statusOptions} 
+                                    onChange={onChange}
+                                    value={value}
+                                    editable={data?.status ? false : true}
+                                />
                             )}
                         />
                         {errors.status && <Text style={styles.errorText}>{errors.status.message}</Text>}
                     </View>
                 </View>          
                 <View style={styles.footer}>
-                    <Button title="Cancelar" color={'#ff6060'} onPress={() => setOpenModal(false)}/>
-                    <Button title="Salvar" onPress={handleSubmit(handleForm)}/>
+                    <Button 
+                        title={!data ? "Cancelar" : "Fechar"} 
+                        color={'#ff6060'} 
+                        onPress={() => setOpenModal(false)}
+                    />
+                    {!data && (
+                        <Button title="Salvar" onPress={handleSubmit(handleForm)}/>
+                    )}
                 </View>
             </View>
         </Modal>

@@ -1,24 +1,50 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native"
 
 interface OptionsInputProps {
-    options: { label: string, value: string }[],
+    options: { label: string, value: string }[]
     onChange: (...event: any[]) => void
+    value: string
+    editable: boolean
 }
 
-export const OptionsInput: React.FC<OptionsInputProps> = ({ options, onChange }) =>
+export const OptionsInput: React.FC<OptionsInputProps> = ({ 
+    options, 
+    onChange, 
+    value,
+    editable 
+}) =>
 {
     const [selected, setSelected] = useState<string | null>(null)
+
+    useEffect(() => 
+    {
+        if(value !== "")
+        {
+            const initial = options.find((item) => item.value === value)
+            
+            if(initial)
+            {
+                setSelected(initial?.value)
+            }
+        }
+    }, [value, options])
+
+    const handleSelect = (item: { label: string, value: string }): void =>
+    {
+        if(editable)
+        {
+            setSelected(item.value)
+            onChange(item.value)
+        }
+    }
 
     return (
         <View style={styles.optionsInput}>
             {options.map((item, key) => (
                 <TouchableOpacity
                     key={key}
-                    onPress={() => {
-                        setSelected(item.value)
-                        onChange(item.value)
-                    }}
+                    onPress={() => handleSelect(item)}
                     style={[
                         styles.option,
                         item.value === selected && styles.selectedOption,

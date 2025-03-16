@@ -1,13 +1,14 @@
 import Foundation from '@expo/vector-icons/Foundation';
-import { AddModal } from "@/components/AddModal";
 import { apiData } from "@/types/apiData";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Text, Button, FlatList, Alert } from "react-native";
+import { OrderModal } from '@/components/orderModal';
 
 export default function testScreen()
 {
     const [openModal, setOpenModal] = useState<boolean>(false)
     const [data, setData] = useState<apiData[]>([])
+    const [selectedData, setSelectedData] = useState<apiData | null>(null)
 
     const getOrders = async ():Promise<void> =>
     {
@@ -35,6 +36,18 @@ export default function testScreen()
         getOrders()
     }, [])
 
+    const handleSelectData = (selected: apiData): void =>
+    {
+        setSelectedData(selected)
+        setOpenModal(true)
+    }
+
+    const handleAddData = (): void =>
+    {
+        setSelectedData(null)
+        setOpenModal(true)
+    }
+
     return (
         <View style={styles.testScreen}>
             <View style={styles.top}>
@@ -46,14 +59,14 @@ export default function testScreen()
                 <Button
                     color={"green"}
                     title="Adicionar"
-                    onPress={() => setOpenModal(true)}
+                    onPress={() => handleAddData()}
                 /> 
             </View>
             <View style={styles.content}>
                 <View style={styles.headerTable}>
                     <Text style={styles.cell}>ID</Text>
-                    <Text style={styles.cell}>Name</Text>
-                    <Text style={styles.cell}>Amount</Text>
+                    <Text style={styles.cell}>Cliente</Text>
+                    <Text style={styles.cell}>Valor</Text>
                     <Text style={styles.cell}></Text>
                 </View>
                 {data.length > 0 && (
@@ -65,7 +78,7 @@ export default function testScreen()
                                 <Text style={styles.cell}>{item.customer_name}</Text>
                                 <Text style={styles.cell}>{item.amount_in_cents}</Text>
                                 <View style={styles.cell}>
-                                    <Foundation name="pencil" size={24} color="black" />
+                                    <Foundation name="pencil" size={24} color="black" onPress={() => handleSelectData(item)}/>
                                 </View>
                             </View>
                         )}
@@ -74,9 +87,10 @@ export default function testScreen()
                 )}
             </View>
             {openModal && (
-                <AddModal 
+                <OrderModal 
                     openModal={openModal} 
                     setOpenModal={setOpenModal}
+                    data={selectedData}
                 />
             )}
         </View>
